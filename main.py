@@ -119,20 +119,20 @@ def treinar_modelo(parametros):
   return -mean_score
 
 parametros = [('entropy', 'gini'),
-              (970, 1500),
+              (100, 1000),
               (3, 20),
               (2,10),
               (1,10)
               ]
 
-otimos = gp_minimize( treinar_modelo, parametros, random_state=0, verbose = 1, n_calls=50, n_random_starts=10, n_jobs= -1)
+otimos_rf = gp_minimize(treinar_modelo, parametros, random_state=0, verbose = 1, n_calls=50, n_random_starts=10, n_jobs= -1)
 
 #%%
-print(otimos.fun, otimos.x)
+print(otimos_rf.fun, otimos_rf.x)
 
 #%%
-model_rf = RandomForestClassifier(criterion=otimos.x[0], n_estimators=otimos.x[1], max_depth=otimos.x[2],  min_samples_split=otimos.x[3], min_samples_leaf=otimos.x[4],
-                                    random_state=0)
+model_rf = RandomForestClassifier(criterion=otimos_rf.x[0], n_estimators=otimos_rf.x[1], max_depth=otimos_rf.x[2], min_samples_split=otimos_rf.x[3], min_samples_leaf=otimos_rf.x[4],
+                                  random_state=0)
 #%%
 model_rf.fit(X_train_sc, y_train)
 y_pred = model_rf.predict(X_train_sc)
