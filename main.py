@@ -46,7 +46,7 @@ X_test_sc = sc.transform(X_test)
 model_lr = LogisticRegression()
 param_lr = [('liblinear','saga'),
             ('l1','l2'),
-            (-0.5,3.5)]
+            (0.1,3.5)]
 
 
 #%% Naive Bayes para Classificação
@@ -94,10 +94,15 @@ param_rf = [('entropy', 'gini'),
 from skopt import gp_minimize
 from functools import partial
 
-func_objetivo = partial(utils.treinar_modelo, model_rf, X_train=X_train_sc, y_train=y_train)
+func_obj_rf = partial(utils.treinar_modelo, RandomForestClassifier(), X_train=X_train_sc, y_train=y_train)
+func_obj_lr = partial(utils.treinar_modelo, LogisticRegression(), X_train=X_train_sc, y_train=y_train)
+func_obj_dtc = partial(utils.treinar_modelo, DecisionTreeClassifier(), X_train=X_train_sc, y_train=y_train)
+func_obj_svc = partial(utils.treinar_modelo, SVC(), X_train=X_train_sc, y_train=y_train)
+func_obj_kneig = partial(utils.treinar_modelo, KNeighborsClassifier(), X_train=X_train_sc, y_train=y_train)
+func_obj_gaussina = partial(utils.treinar_modelo, GaussianNB(), X_train=X_train_sc, y_train=y_train)
 
 otimos_rf = gp_minimize(
-    func_objetivo,
+    func_obj_rf,
     param_rf,
     random_state=0,
     verbose = 1,
@@ -106,12 +111,87 @@ otimos_rf = gp_minimize(
     n_jobs= -1
 )
 
+otimos_lr = gp_minimize(
+    func_obj_lr,
+    param_lr,
+    random_state=0,
+    verbose = 1,
+    n_calls=30,
+    n_random_starts=10,
+    n_jobs= -1
+)
+
+otimos_dtc = gp_minimize(
+    func_obj_dtc,
+    param_det,
+    random_state=0,
+    verbose = 1,
+    n_calls=30,
+    n_random_starts=10,
+    n_jobs= -1
+)
+
+otimos_svc = gp_minimize(
+    func_obj_svc,
+    param_svc,
+    random_state=0,
+    verbose = 1,
+    n_calls=30,
+    n_random_starts=10,
+    n_jobs= -1
+)
+
+otimos_kneig = gp_minimize(
+    func_obj_kneig,
+    param_knn,
+    random_state=0,
+    verbose = 1,
+    n_calls=30,
+    n_random_starts=10,
+    n_jobs= -1
+)
+
+# otimos_gaussina = gp_minimize(
+#     func_obj_gaussina,
+#     param_,
+#     random_state=0,
+#     verbose=1,
+#     n_calls=30,
+#     n_random_starts=10,
+#     n_jobs=-1
+# )
+
 #%%
-print(otimos_rf.fun, otimos_rf.x)
+print("otimos_rf:", otimos_rf.x)
+print("otimos_lr:", otimos_lr.x)
+print("otimos_dtc:", otimos_dtc.x)
+print("otimos_svc:", otimos_svc.x)
+print("otimos_kneig:", otimos_kneig.x)
+
 
 #%%
 model_rf = RandomForestClassifier(criterion=otimos_rf.x[0], n_estimators=otimos_rf.x[1], max_depth=otimos_rf.x[2], min_samples_split=otimos_rf.x[3], min_samples_leaf=otimos_rf.x[4],
                                   random_state=0)
+model_lr = LogisticRegression(solver=otimos_lr.x[0],penalty=otimos_lr.x[1],C=otimos_lr.x[2], random_state=0)
+
+model_svc = SVC(kernel=otimos_svc.x[0],
+                C=otimos_svc.x[1],
+                gamma=otimos_svc.x[2],
+                degree=otimos_svc.x[3],
+                random_state=0)
+
+model_knn = KNeighborsClassifier(n_neighbors=otimos_kneig.x[0],
+                                 p=otimos_kneig.x[1],
+                                 n_jobs=-1)
+
+model_det = DecisionTreeClassifier(criterion=otimos_dtc.x[0],
+                                    max_depth=otimos_dtc.x[1],
+                                    min_samples_split=otimos_dtc.x[2],
+                                    min_samples_leaf=otimos_dtc.x[3],
+                                    random_state=0)
+
+
+
 #%%
 model_rf.fit(X_train_sc, y_train)
 y_pred = model_rf.predict(X_train_sc)
