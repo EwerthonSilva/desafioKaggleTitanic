@@ -1,11 +1,5 @@
-import numpy as np
-from sklearn.model_selection import cross_val_score
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.naive_bayes import GaussianNB
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.svm import SVC
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.linear_model import LogisticRegression
+from imports import *
+
 
 def normalize_feature(X):
   X['Age'] = X['Age'].fillna(X['Age'].mean())
@@ -78,3 +72,53 @@ def treinar_modelo(modelo_tipo, parametros, X_train, y_train):
     except Exception as e:
         print(f"Erro ao treinar {modelo_tipo.__class__.__name__}: {e}")
         return 1.0  # Penaliza score alto em caso de erro
+
+modelos_parametros = {
+    'RandomForest': {
+        'modelo': RandomForestClassifier(),
+        'parametros': [
+            Categorical(['entropy', 'gini']),
+            Integer(100, 1000),
+            Integer(3, 20),
+            Integer(2, 10),
+            Integer(1, 10)
+        ]
+    },
+    'LogisticRegression': {
+        'modelo': LogisticRegression(),
+        'parametros': [
+            Categorical(['liblinear', 'saga']),
+            Categorical(['l1', 'l2']),
+            Real(0.001, 10.0, prior='log-uniform')
+        ]
+    },
+    'KNN': {
+        'modelo': KNeighborsClassifier(),
+        'parametros': [
+            Integer(2, 15),  # n_neighbors
+            Integer(1, 2)    # p=1 (Manhattan) ou p=2 (Euclidiana)
+        ]
+    },
+    'SVM': {
+        'modelo': SVC(),
+        'parametros': [
+            Categorical(['linear', 'rbf', 'poly']),
+            Real(0.1, 10.0),
+            Real(0.001, 1.0),
+            Integer(2, 5)
+        ]
+    },
+    'DecisionTree': {
+        'modelo': DecisionTreeClassifier(),
+        'parametros': [
+            Categorical(['entropy', 'gini']),
+            Integer(3, 20),
+            Integer(2, 10),
+            Integer(1, 10)
+        ]
+    },
+    'GaussianNB': {
+        'modelo': GaussianNB(),
+        'parametros': []  # Não tem hiperparâmetros, uso fixo
+    }
+}
