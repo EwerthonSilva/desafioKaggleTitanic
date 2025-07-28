@@ -1,3 +1,5 @@
+from logisticRegression.main import LogisticRegression
+
 from imports import *
 
 from utils import *
@@ -56,7 +58,7 @@ for nome_modelo, conteudo in modelos_parametros.items():
             dimensions=parametros,
             random_state=0,
             verbose=0,
-            n_calls=30,
+            n_calls=15,
             n_random_starts=10,
             n_jobs=-1
         )
@@ -77,6 +79,52 @@ for nome_modelo, conteudo in modelos_parametros.items():
         print(f"✅ {nome_modelo} - Score fixo: {media_score:.4f}")
         resultados.append((nome_modelo, media_score, None))
 
+#%%
+modelos = {}
+
+for modelo, acuracia, parametros in resultados:
+    if parametros is not None:
+        if modelo == 'RandomForest':
+            modelos['RandomForest'] = RandomForestClassifier(
+                criterion=parametros[0],
+                n_estimators=parametros[1],
+                max_depth=parametros[2],
+                min_samples_split=parametros[3],
+                min_samples_leaf=parametros[4],
+                random_state=0
+            )
+        elif modelo == 'LogisticRegression':
+            modelos['LogisticRegression'] = LogisticRegression(
+                solver=parametros[0],
+                penalty=parametros[1],
+                C=parametros[2],
+                random_state=0
+            )
+        elif modelo == 'KNN':
+            modelos['KNN'] = KNeighborsClassifier(
+                n_neighbors=parametros[0],
+                p=parametros[1]
+            )
+        elif modelo == 'SVC':
+            modelos['SVC'] = SVC(
+                kernel=parametros[0],
+                C=parametros[1],
+                gamma=parametros[2],
+                degree=parametros[3]
+            )
+        elif modelo == 'DecisionTree':
+            modelos['DecisionTree'] = DecisionTreeClassifier(
+                criterion=parametros[0],
+                max_depth=parametros[1],
+                min_samples_split=parametros[2],
+                min_samples_leaf=parametros[3]
+            )
+        print(f"Modelo: {modelo}")
+        print(f"Acurácia: {acuracia}")
+        print(f"Parâmetros: {parametros}")
+    else:
+        modelos['GaussianNB'] = GaussianNB()
+        print("Parâmetros: Nenhum")
 
 
 #%%
@@ -91,7 +139,15 @@ melhor_modelo_nome, melhor_score, melhores_param = resultados[0]
 print(f"\n🚀 Melhor modelo: {melhor_modelo_nome} com score {melhor_score:.4f}")
 
 
+#%% Ensemble model (Votting)
+estimators = [('RandomForest', modelos['RandomForest']),('LogisticRegression',modelos['LogisticRegression']),('KNN', modelos['KNN']),('SVC', modelos['SVC']),('DecisionTree', modelos['DecisionTree']),('GaussianNB', modelos['GaussianNB'])]
+model_votting = VotingClassifier(estimators=estimators, voting='hard')
 
+model_votting.fit(X_train_sc, y_train)
+
+score = cross_val_score(model_votting, X_train_sc, y_train, cv=10, scoring='accuracy')
+
+print(np.mean(score))
 #%%
 # model_rf.fit(X_train_sc, y_train)
 # y_pred = model_rf.predict(X_train_sc)
@@ -105,11 +161,12 @@ print(f"\n🚀 Melhor modelo: {melhor_modelo_nome} com score {melhor_score:.4f}"
 # print(score)
 
 #%%
-# y_pred = model_rf.predict(X_test_sc)
+y_pred = model_votting.predict(X_test_sc)
+
 # print(y_pred.size)
 #%%
-# submission = pd.DataFrame()
-# submission['PassengerId'] = test['PassengerId']
-# submission['Survived'] = y_pred
+submission = pd.DataFrame()
+submission['PassengerId'] = test['PassengerId']
+submission['Survived'] = y_pred
 
-# submission.to_csv('data/submission.csv', index = False)
+submission.to_csv('data/submission.csv', index = False)

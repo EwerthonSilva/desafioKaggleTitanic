@@ -99,7 +99,7 @@ modelos_parametros = {
             Integer(1, 2)    # p=1 (Manhattan) ou p=2 (Euclidiana)
         ]
     },
-    'SVM': {
+    'SVC': {
         'modelo': SVC(),
         'parametros': [
             Categorical(['linear', 'rbf', 'poly']),

@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import sklearn
 
 from sklearn.model_selection import cross_val_score
 from sklearn.ensemble import RandomForestClassifier
@@ -14,6 +15,8 @@ from skopt import gp_minimize
 from skopt.space import Categorical, Integer, Real
 from functools import partial
 from sklearn.preprocessing import StandardScaler
+
+from sklearn.ensemble import VotingClassifier
 
 
 
